@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Firecrawl Results Dashboard</title>
+    <title>Firecrawl Analyzer Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -72,6 +72,66 @@
             color: #888;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        /* URL Submission Section */
+        .submission-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .submission-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .submission-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .submission-header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .form-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .google-form {
+            width: 100%;
+            height: 800px;
+            border: none;
+            display: block;
+        }
+
+        /* Results Section */
+        .results-header {
+            text-align: center;
+            margin: 3rem 0 2rem 0;
+        }
+
+        .results-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 1rem;
         }
 
         .controls {
@@ -260,6 +320,15 @@
             .header h1 {
                 font-size: 2rem;
             }
+
+            .submission-header h2,
+            .results-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .google-form {
+                height: 600px;
+            }
             
             .controls {
                 flex-direction: column;
@@ -283,9 +352,10 @@
 </head>
 <body>
     <div class="container">
+        <!-- Header Section -->
         <div class="header">
-            <h1>🔥 Firecrawl Results</h1>
-            <p>Web scraping and extraction results dashboard</p>
+            <h1>🔥 Firecrawl Analyzer</h1>
+            <p>Advanced web scraping and NLP extraction platform</p>
             <div class="stats">
                 <div class="stat">
                     <div class="stat-number" id="total-results">-</div>
@@ -296,6 +366,27 @@
                     <div class="stat-label">Total Size</div>
                 </div>
             </div>
+        </div>
+
+        <!-- URL Submission Section -->
+        <div class="submission-section">
+            <div class="submission-header">
+                <h2>🚀 Submit URL for Analysis</h2>
+                <p>Get detailed scraping results with NLP-powered contact extraction, screenshots, and structured data</p>
+            </div>
+            <div class="form-wrapper">
+                <iframe 
+                    src="https://docs.google.com/forms/d/e/1FAIpQLSeYhvs1TJegIh9xchxPEYeDe5fDe_o3jgfaDi9feBtjFuNOWg/viewform?embedded=true" 
+                    class="google-form"
+                    title="Firecrawl URL Submission Form">
+                    Loading form...
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-header">
+            <h2>📊 Analysis Results</h2>
         </div>
 
         <div class="controls">
@@ -389,7 +480,7 @@
                     <div class="empty-state">
                         <div class="empty-icon">📭</div>
                         <h3>${searchTerm ? 'No matching results' : 'No results yet'}</h3>
-                        <p>${searchTerm ? 'Try a different search term' : 'Results will appear here once scraping begins'}</p>
+                        <p>${searchTerm ? 'Try a different search term' : 'Submit a URL above to generate your first analysis'}</p>
                     </div>
                 `;
                 return;
