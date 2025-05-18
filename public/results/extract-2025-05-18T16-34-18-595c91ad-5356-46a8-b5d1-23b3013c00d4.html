@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Firecrawl Extract Results</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333;line-height:1.6;}
+    .container{max-width:1000px;margin:0 auto;padding:2rem;}
+    .header{text-align:center;margin-bottom:2rem;background:rgba(255,255,255,.95);padding:2rem;border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,.1);backdrop-filter:blur(10px);}
+    .header h1{font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem;}
+    .header p{font-size:1.1rem;color:#666;}
+    .status-bar{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.9);padding:1.5rem 2rem;border-radius:15px;margin-bottom:2rem;box-shadow:0 4px 20px rgba(0,0,0,.1);}
+    .status{font-weight:700;color:#2c7744;font-size:1.1rem;}
+    .expires{color:#666;font-size:1rem;}
+    .data-section{background:rgba(255,255,255,.95);border-radius:20px;padding:2rem;box-shadow:0 8px 32px rgba(0,0,0,.1);backdrop-filter:blur(10px);margin-bottom:2rem;}
+    .data-section h2{font-size:1.8rem;font-weight:600;color:#333;border-bottom:2px solid #f0f0f0;padding-bottom:1rem;margin-bottom:1.5rem;}
+    .data-table{width:100%;border-collapse:collapse;font-size:1rem;}
+    .data-table th{background:linear-gradient(135deg,#f8f9fa,#e9ecef);color:#495057;font-weight:600;padding:1rem 1.5rem;text-align:left;border-bottom:2px solid #dee2e6;font-size:.9rem;text-transform:uppercase;letter-spacing:.5px;}
+    .data-table td{padding:1rem 1.5rem;border-bottom:1px solid #f0f0f0;vertical-align:top;}
+    .data-table td:first-child{font-weight:600;color:#495057;background:rgba(102,126,234,.05);width:200px;}
+    .data-table td:last-child{color:#333;word-break:break-all;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .data-table tr:hover{background:rgba(102,126,234,.02);}
+    .footer{text-align:center;margin-top:2rem;color:rgba(255,255,255,.8);font-size:.9rem;}
+    @media(max-width:768px){.container{padding:1rem;}.header h1{font-size:2rem;}.status-bar{flex-direction:column;gap:.5rem;text-align:center;}.data-table th,.data-table td{padding:.8rem;}.data-table td:first-child{width:auto;}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Extract Results</h1>
+      <p>NLP-powered data extraction and analysis</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status">STATUS: completed</div>
+      <div class="expires">Expires: 2025-05-18T21:34:25.000Z</div>
+    </div>
+
+    <div class="data-section">
+      <h2>📊 Extracted Data</h2>
+      <table class="data-table">
+        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+        <tbody>
+<tr><td>Job Titles</td><td><ul style="margin-left:1rem;list-style:square;"><li>Software Engineering</li><li>Applied ML Engineering</li><li>Infrastructure Engineering</li><li>Security Engineering</li><li>Business Analytics</li><li>Data Engineering</li><li>Product Data Science</li><li>Content Design</li><li>Industrial Design</li><li>UX Design</li><li>UX Management</li><li>Product Management</li><li>Technical Program Management</li><li>Incubation Sales</li><li>Integrated System Sales</li><li>&hellip; + 31 more</li></ul></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <p>Generated with ❤️ by Firecrawl Analyzer • 5/18/2025</p>
+    </div>
+  </div>
+</body>
+</html>
