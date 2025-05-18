@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Scraper Results</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: #666;
+    }
+
+    .info-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-bar > div {
+      padding: 1rem;
+      background: white;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .info-bar strong {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .url {
+      word-break: break-all;
+      color: #0070f3;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .screenshot {
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      margin: 2rem auto;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .screenshot:hover {
+      transform: scale(1.02);
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .section-header {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 1.2rem 1.5rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-header::after {
+      content: '▼';
+      transition: transform 0.3s ease;
+      font-size: 0.8rem;
+    }
+
+    .section-header.collapsed::after {
+      transform: rotate(-90deg);
+    }
+
+    .section-header:hover {
+      background: linear-gradient(135deg, #5a6fd8, #6941a0);
+    }
+
+    .section-body {
+      padding: 2rem;
+      max-height: 600px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+    }
+
+    .section-body.collapsed {
+      max-height: 0;
+      padding: 0 2rem;
+      overflow: hidden;
+    }
+
+    .markdown-content {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .markdown-content pre {
+      white-space: pre-wrap;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #333;
+      margin: 0;
+    }
+
+    .metadata-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .metadata-table th {
+      background: #f8f9fa;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #dee2e6;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.8rem;
+    }
+
+    .metadata-table td {
+      padding: 1rem;
+      border-bottom: 1px solid #dee2e6;
+      vertical-align: top;
+    }
+
+    .metadata-table td:first-child {
+      font-weight: 600;
+      color: #495057;
+      width: 200px;
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .metadata-table td:last-child {
+      font-family: 'Monaco', 'Courier New', monospace;
+      word-break: break-all;
+      color: #333;
+    }
+
+    .section-body pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1.5rem;
+      border-radius: 10px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      border: 1px solid #333;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 500px;
+      position: relative;
+    }
+
+    .code-container {
+      position: relative;
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .copy-button:hover {
+      background: #555;
+      transform: translateY(-1px);
+    }
+
+    .copy-button.copied {
+      background: #28a745;
+    }
+
+    .copy-button.copied::after {
+      content: ' ✓';
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .undefined-hide {
+      display: none !important;
+    }
+
+    /* Scrollbar styling */
+    .section-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .section-body::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .section-body::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+
+    .section-body::-webkit-scrollbar-thumb:hover {
+      background: #5a6fd8;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .info-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .section-header {
+        font-size: 1.1rem;
+        padding: 1rem 1.2rem;
+      }
+
+      .section-body {
+        padding: 1.5rem;
+      }
+
+      .metadata-table th,
+      .metadata-table td {
+        padding: 0.8rem;
+      }
+
+      .metadata-table td:first-child {
+        width: auto;
+      }
+    }
+
+    /* Loading animation for images */
+    .screenshot {
+      opacity: 0;
+      animation: fadeIn 0.5s ease-in-out forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Code syntax highlighting hint */
+    .section-body pre code {
+      display: block;
+    }
+
+    /* Better link styling in metadata */
+    .metadata-table a {
+      color: #0070f3;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+
+    .metadata-table a:hover {
+      border-bottom-color: #0070f3;
+    }
+
+    /* Status badge styling */
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 Website Scraper Results</h1>
+      <p>Detailed scraping results with extracted content, metadata, and preview</p>
+    </header>
+    
+    <div class="info-bar">
+      <div>
+        <strong>Source URL</strong>
+        <span class="url">https://www.simplistack.com/</span>
+      </div>
+      <div>
+        <strong>Generated</strong>
+        <span>5/18/2025, 10:20:38 PM</span>
+      </div>
+    </div>
+
+    
+
+    
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          📝 Markdown Content
+        </div>
+        <div class="section-body">
+          <div class="markdown-content">
+            <pre>[Skip to content](https://www.simplistack.com/#main)
+
+# Need to Scale While Lowering Acquisition Costs?
+
+We are a digital marketing agency, growing companies by:
+
+
+## Increasin  \|
+
+[Learn More](https://www.simplistack.com/services/reduce-customer-acquisition-costs/)
+
+## Some Customers We've Worked With
+
+Over the past 15 years we’ve had the privilege of working with some amazing customers we now call friends. As you can see, we have a mix of clients, ranging from $1M E-commerce startups to fast growing $100M international customers.
+
+![Customer Logos](https://www.simplistack.com/wp-content/uploads/2022/12/mobile-client-logos.png)
+
+![Ashford.com](https://www.simplistack.com/wp-content/uploads/2019/05/ashford.jpg)
+
+![Dronenerds.com](https://www.simplistack.com/wp-content/uploads/2019/05/drone-nerds-1.jpg)
+
+![supershoes.com](https://www.simplistack.com/wp-content/uploads/2019/05/super-shoes.jpg)
+
+![peaceloveworld.com](https://www.simplistack.com/wp-content/uploads/2019/05/peace-love-world.jpg)
+
+![prioritytire.com](https://www.simplistack.com/wp-content/uploads/2019/05/priority-tires.jpg)
+
+![invicta.com](https://www.simplistack.com/wp-content/uploads/2019/05/invicta-stores.jpg)
+
+![mimeo.com](https://www.simplistack.com/wp-content/uploads/2019/05/mimeo.jpg)
+
+![uspmotorsports.com](https://www.simplistack.com/wp-content/uploads/2019/05/usp-motorsports.jpg)
+
+![Growershouse.com](https://www.simplistack.com/wp-content/uploads/2021/11/growershouse-logo-2.png)
+
+![Gmed.com](https://www.simplistack.com/wp-content/uploads/2019/05/g-Med.jpg)
+
+![islandtrends.com](https://www.simplistack.com/wp-content/uploads/2019/05/Island-trends.jpg)
+
+![wohlassociates.com](https://www.simplistack.com/wp-content/uploads/2019/05/wohl-associates-1.jpg)
+
+## Here is How We Can Help
+
+We are not your typical one stop marketing shop. We are proud to be experts at one thing… Digital Marketing.  We work with senior care facilities, local businesses and fast growing DTC & B2B E-commerce customers. We can help in a purely strategic role, assist with hands-on implementation or both.
+
+### [Assisted Living/Senior Care](https://www.simplistack.com/services/assisted-living/)
+
+Marketing to seniors and their families is very different than typical demographic cohort marketing. As one of the most personal decisions a family has to make for their elderly loved ones, we have refined our lead acquisition program to match the unique one on one needs of this community.
+
+### [Scale $ & Reduce Acquisition Costs](https://www.simplistack.com/services/reduce-customer-acquisition-costs/)
+
+In a world of rapidly rising costs, our 3 step framework has proven to decrease acquisition costs while still growing top line revenue and profitability. We're so confident in our process that guarantee we'll reduce your acquisition costs in 90 days. Learn more about our flagship offering and see if you're a good match.
+
+### [Outsourced CMO/Strategy](https://www.simplistack.com/services/outsourced-cmo-strategy/)
+
+Hiring a full-time CMO or Director of E-commerce is time consuming and expensive. Leverage of our experienced team of digital marketers to get over the growth hump. We have several customers with whom we've been working with for over 10 years. And their growth is the reason why.
+
+### Marketing Automation
+
+Your lowest cost per acquisition channels are almost always email and SMS. We can help you select the best platforms, migrate from your current ESP, & identify segments to target with automations. Then each visitor receives personalized content at their cadence.
+
+### [E-Commerce SEO Audits](https://www.simplistack.com/services/enterprise-e-commerce-seo-audit/)
+
+Sick of wondering why you're not ranking as well as your competitors? Our SEO audits utilize AI tools and human experience to identify and prioritize opportunities for improvement. Unlike free audits, we deliver a roadmap and strategy that guarantees success.
+
+### [Conversion Rate Optimization](https://www.simplistack.com/services/website-conversion-optimization-ab-testing/)
+
+Improving your conversion rate not only increases revenue, but it also grows profit margins by lowering the cost to acquire that customer. Our proven testing methodology & leading testing tools can be deployed on your site within 30 days.
+
+### [Platform Migration Planning](https://www.simplistack.com/services/platform-migration-planning/)
+
+Moving from Magento to BigCommerce? Or from WooCommerce to Shopify? Our team will plan the migration so no organic traffic is lost. We can also deliver a mobile-first design that is built to convert visitors to buyers.
+
+### [E-Commerce SEO Management](https://www.simplistack.com/services/ecommerce-seo-management/)
+
+Our unrivaled experience with E-Commerce SEO comes from over 14 years of site/platform migrations, on-site technical optimization, content marketing strategies, & link building.
+
+_Get Ranked or Get Spanked™_
+
+### [PPC/SEM Management](https://www.simplistack.com/services/ppc-sem-management/)
+
+Google, Bing, Criteo, Adroll.
+
+We'll help you setup your paid campaigns then actively optimize them to hit your ROAS goals. We guarantee full transparency for KPI reporting and management fees.
+
+## Our Platform Expertise
+
+We have experience with all the major E-Commerce platforms on the market today. **We can provide digital marketing services no matter which platform you are on.** Below are the core platforms we work with.
+
+![big-commerce](https://www.simplistack.com/wp-content/uploads/2019/05/big-commerce.jpg)
+
+![magento](https://www.simplistack.com/wp-content/uploads/2019/05/magento.jpg)
+
+![woocommerce](https://www.simplistack.com/wp-content/uploads/2019/05/woocommerce.jpg)
+
+![shopify](https://www.simplistack.com/wp-content/uploads/2019/05/shopify.jpg)
+
+## Contact Us Today!
+
+Take the first step and reach out to us today.
+
+We’re happy to have a chat to see if we can help.
+
+[Contact Us Now](https://www.simplistack.com/#contacts)
+
+## Our Company
+
+If you want a boutique digital agency who serves as a proactive partner, holding your team accountable for the plan we put in place, give us a call. We have clients who have been with us for 11 years, so we must be doing something right!
+
+20\+ Years
+
+Of Marketing Experience
+
+100+
+
+Happy Clients Over the Years
+
+2 Locations
+
+In Florida
+
+[Learn More About Us](https://www.simplistack.com/about-us/)
+
+## What our Customers Have to Say​
+
+"As my outsourced CMO & marketing team, they treat my company like it's their own. They're actively watching my site at nights, weekends and even when on vacations. They're constantly pushing to try new tools and tactics. You can't ask for more."
+
+[![](https://www.simplistack.com/wp-content/uploads/2019/05/priority-tire.jpg)](https://www.prioritytire.com/)
+
+[Dimitri Chernyak](https://www.prioritytire.com/) [CEO](https://www.prioritytire.com/)
+
+"If I had to take a guess, I would say we are working with Matt and his people for maybe 15 years and never had one complaint about their work, which is hard to say about any supplier nowadays.
+We can highly recommend seo4anyone."
+
+[![](https://www.simplistack.com/wp-content/uploads/2019/05/wohl-associates.jpg)](https://www.wohlassociates.com/)
+
+[Andy Wohl](https://www.wohlassociates.com/) [CEO](https://www.wohlassociates.com/)
+
+"We've worked with seo4anyone since the launch of our E-Commerce site and in the years since, we've seen our growth result in us becoming the #1 online source for drones. Their E-Commerce expertise is invaluable to my team, as they cross-train our internal staff on a regular basis."
+
+[![drone-nerds](https://www.simplistack.com/wp-content/uploads/elementor/thumbs/drone-nerds-pnw8hvc99hy26kzjqperril22ptzdxy6name0owba8.jpg)](https://www.dronenerds.com/)
+
+[Jeremy Schneiderman](https://www.dronenerds.com/) [CEO](https://www.dronenerds.com/)
+
+## Real Case Studies, Real Results
+
+See how we’ve worked with our customers to **reduce costs**, **grow their revenue**, and **maximize their profitability**!
+
+Tire Mart
+
+Reduced customer acquisition costs by 64% in 90 days. Revenue grew 36%.
+
+Motorcycle Closeouts
+
+Increased organic traffic by 58.4% in 3 months using our SEO.Stack solution.
+
+Peace Love World
+
+Increased organic traffic by 600% in 1 year.
+
+Invicta
+
+Invicta’s Online store increased its organic channel sales by 150% in one year.
+
+Drone Nerds
+
+Increased organic visibility by 100% in only 9 months.
+
+Priority Tire
+
+Increased organic traffic by 92.5% through our organic growth program.
+
+Tire Mart
+
+Reduced customer acquisition costs by 64% in 90 days. Revenue grew 36%.
+
+Motorcycle Closeouts
+
+Increased organic traffic by 58.4% in 3 months using our SEO.Stack solution.
+
+Peace Love World
+
+Increased organic traffic by 600% in 1 year.
+
+Invicta
+
+Invicta’s Online store increased its organic channel sales by 150% in one year.
+
+Drone Nerds
+
+Increased organic visibility by 100% in only 9 months.
+
+Priority Tire
+
+Increased organic traffic by 92.5% through our organic growth program.
+
+Tire Mart
+
+Reduced customer acquisition costs by 64% in 90 days. Revenue grew 36%.
+
+Motorcycle Closeouts
+
+Increased organic traffic by 58.4% in 3 months using our SEO.Stack solution.
+
+Peace Love World
+
+Increased organic traffic by 600% in 1 year.
+
+Invicta
+
+Invicta’s Online store increased its organic channel sales by 150% in one year.
+
+Drone Nerds
+
+Increased organic visibility by 100% in only 9 months.
+
+Priority Tire
+
+Increased organic traffic by 92.5% through our organic growth program.
+
+Previous slide
+
+Next slide
+
+## Contact Us Now
+
+Send us a note and let us know how we can help. We will get back to you asap.
+
+Name
+
+Email
+
+Phone
+
+Website
+
+Message</pre>
+          </div>
+        </div>
+      </div>
+    
+
+    
+      <div class="section">
+        <div class="section-header" onclick="toggleSection(this)">
+          📊 Page Metadata
+        </div>
+        <div class="section-body">
+          <table class="metadata-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>twitter:card</td><td>summary_large_image</td></tr><tr><td>language</td><td>en-US</td></tr><tr><td>modifiedTime</td><td>2024-07-10T15:53:00+00:00</td></tr><tr><td>ogTitle</td><td>Digital Marketing Experts in Miami Florida</td></tr><tr><td>msapplication-TileImage</td><td><a href="https://www.simplistack.com/wp-content/uploads/2019/05/cropped-favicon-270x270.png" target="_blank">https://www.simplistack.com/wp-content/uploads/2019/05/cropped-favicon-270x270.png</a></td></tr><tr><td>og:type</td><td>website</td></tr><tr><td>title</td><td>Digital Marketing Experts in Miami Florida</td></tr><tr><td>ogDescription</td><td>Getting killed by skyrocketing customer acquisition costs? Ask us about Acquisition.Stack™. 15 years of learning delivered to you in 90 Days.</td></tr><tr><td>og:locale</td><td>en_US</td></tr><tr><td>ogSiteName</td><td>SimpliStack.com</td></tr><tr><td>description</td><td>Getting killed by skyrocketing customer acquisition costs? Ask us about Acquisition.Stack™. 15 years of learning delivered to you in 90 Days.</td></tr><tr><td>favicon</td><td><a href="https://www.simplistack.com/wp-content/uploads/2019/05/cropped-favicon-32x32.png" target="_blank">https://www.simplistack.com/wp-content/uploads/2019/05/cropped-favicon-32x32.png</a></td></tr><tr><td>viewport</td><td>width=device-width, initial-scale=1</td></tr><tr><td>ogImage</td><td><a href="https://www.simplistack.com/wp-content/uploads/2022/12/mobile-client-logos.png" target="_blank">https://www.simplistack.com/wp-content/uploads/2022/12/mobile-client-logos.png</a></td></tr><tr><td>ogUrl</td><td><a href="https://www.simplistack.com/" target="_blank">https://www.simplistack.com/</a></td></tr><tr><td>ogLocale</td><td>en_US</td></tr><tr><td>og:description</td><td>Getting killed by skyrocketing customer acquisition costs? Ask us about Acquisition.Stack™. 15 years of learning delivered to you in 90 Days.</td></tr><tr><td>og:url</td><td><a href="https://www.simplistack.com/" target="_blank">https://www.simplistack.com/</a></td></tr><tr><td>og:image</td><td><a href="https://www.simplistack.com/wp-content/uploads/2022/12/mobile-client-logos.png" target="_blank">https://www.simplistack.com/wp-content/uploads/2022/12/mobile-client-logos.png</a></td></tr><tr><td>og:title</td><td>Digital Marketing Experts in Miami Florida</td></tr><tr><td>article:modified_time</td><td>2024-07-10T15:53:00+00:00</td></tr><tr><td>facebook-domain-verification</td><td>[
+  "bw834t3w7thgl8ce1dxw68wof27eyo",
+  "2yxd9xk8dkm00op6dbngn22534yr2l"
+]</td></tr><tr><td>robots</td><td>index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1</td></tr><tr><td>generator</td><td>Elementor 3.18.1; features: e_dom_optimization, e_optimized_assets_loading, e_optimized_css_loading, e_font_icon_svg, additional_custom_breakpoints, block_editor_assets_optimize, e_image_loading_optimization; settings: css_print_method-external, google_font-enabled, font_display-auto</td></tr><tr><td>og:site_name</td><td>SimpliStack.com</td></tr><tr><td>scrapeId</td><td>3bc4f84e-8929-4e51-b406-e3ec6d1759f8</td></tr><tr><td>sourceURL</td><td><a href="https://www.simplistack.com/" target="_blank">https://www.simplistack.com/</a></td></tr><tr><td>url</td><td><a href="https://www.simplistack.com/" target="_blank">https://www.simplistack.com/</a></td></tr><tr><td>statusCode</td><td>200</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    
+
+    
+
+    <footer>
+      <p>Generated with ❤️ by Firecrawl • 5/18/2025 at 10:20:38 PM</p>
+    </footer>
+  </div>
+
+  <script>
+    function toggleSection(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('collapsed');
+    }
+
+    function copyToClipboard(button, elementId) {
+      const element = document.getElementById(elementId);
+      const text = element.textContent;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        button.classList.add('copied');
+        button.textContent = '✓ Copied!';
+        
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerHTML = '📋 Copy HTML';
+        }, 2000);
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        button.classList.add('copied');
+        button.textContent = '✓ Copied!';
+        
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerHTML = '📋 Copy HTML';
+        }, 2000);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize all sections as expanded
+      document.querySelectorAll('.section-body').forEach(s => s.classList.remove('collapsed'));
+      
+      // Hide undefined elements
+      document.querySelectorAll('*').forEach(el => {
+        if (el.childNodes.length === 1 && 
+            el.childNodes[0].nodeType === 3 && 
+            el.textContent.trim() === 'undefined') {
+          el.classList.add('undefined-hide');
+        }
+      });
+
+      // Add smooth scrolling to sections
+      document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => {
+          setTimeout(() => {
+            if (!header.classList.contains('collapsed')) {
+              header.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }, 300);
+        });
+      });
+
+      // Format JSON in metadata table
+      document.querySelectorAll('.metadata-table td').forEach(cell => {
+        try {
+          const text = cell.textContent;
+          if (text.startsWith('{') || text.startsWith('[')) {
+            const formatted = JSON.stringify(JSON.parse(text), null, 2);
+            cell.innerHTML = `<pre style="margin: 0; background: transparent; padding: 0; border: none; color: inherit;">${formatted}</pre>`;
+          }
+        } catch (e) {
+          // Not JSON, leave as is
+        }
+      });
+    });
+  </script>
+</body>
+</html>
