@@ -74,64 +74,143 @@
             letter-spacing: 0.5px;
         }
 
-        /* URL Submission Section */
-        .submission-section {
+        /* Tab System */
+        .tab-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 3rem;
+            overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
         }
 
-        .submission-header {
+        .tab-nav {
+            display: flex;
+            background: rgba(102, 126, 234, 0.1);
+            border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.02);
+            color: #333;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Form Tab Styles */
+        .form-section {
             text-align: center;
+        }
+
+        .form-header {
             margin-bottom: 2rem;
         }
 
-        .submission-header h2 {
+        .form-header h2 {
             font-size: 2rem;
             font-weight: 700;
             color: #333;
             margin-bottom: 0.5rem;
         }
 
-        .submission-header p {
+        .form-header p {
             font-size: 1.1rem;
             color: #666;
         }
 
         .form-wrapper {
-            max-width: 800px;
+            width: 100%;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             overflow: hidden;
+            position: relative;
         }
 
         .google-form {
             width: 100%;
-            height: 800px;
+            height: 700px;
             border: none;
             display: block;
         }
 
-        /* Results Section */
-        .results-header {
+        .form-success {
+            display: none;
             text-align: center;
-            margin: 3rem 0 2rem 0;
+            padding: 3rem;
+            background: rgba(46, 204, 113, 0.1);
+            border: 2px solid #2ecc71;
+            border-radius: 15px;
+            margin-top: 2rem;
         }
 
-        .results-header h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 1rem 2rem;
-            border-radius: 50px;
-            display: inline-block;
+        .form-success.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #2ecc71;
             margin-bottom: 1rem;
+        }
+
+        .reset-btn {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Results Tab Styles */
+        .results-section {
+            min-height: 600px;
         }
 
         .controls {
@@ -321,9 +400,9 @@
                 font-size: 2rem;
             }
 
-            .submission-header h2,
-            .results-header h2 {
-                font-size: 1.5rem;
+            .tab-btn {
+                padding: 1rem;
+                font-size: 1rem;
             }
 
             .google-form {
@@ -368,43 +447,69 @@
             </div>
         </div>
 
-        <!-- URL Submission Section -->
-        <div class="submission-section">
-            <div class="submission-header">
-                <h2>🚀 Submit URL for Analysis</h2>
-                <p>Get detailed scraping results with NLP-powered contact extraction, screenshots, and structured data</p>
+        <!-- Tab Container -->
+        <div class="tab-container">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('submit')">
+                    🚀 Submit URL
+                </button>
+                <button class="tab-btn" onclick="switchTab('results')">
+                    📊 View Results
+                </button>
             </div>
-            <div class="form-wrapper">
-                <iframe 
-                    src="https://docs.google.com/forms/d/e/1FAIpQLSeYhvs1TJegIh9xchxPEYeDe5fDe_o3jgfaDi9feBtjFuNOWg/viewform?embedded=true" 
-                    class="google-form"
-                    title="Firecrawl URL Submission Form">
-                    Loading form...
-                </iframe>
+
+            <!-- Submit Tab Content -->
+            <div class="tab-content active" id="submit-tab">
+                <div class="form-section">
+                    <div class="form-header">
+                        <h2>Submit URL for Analysis</h2>
+                        <p>Get detailed scraping results with NLP-powered extraction, screenshots, and structured data</p>
+                    </div>
+                    
+                    <div class="form-wrapper" id="form-container">
+                        <iframe 
+                            src="https://docs.google.com/forms/d/e/1FAIpQLSeYhvs1TJegIh9xchxPEYeDe5fDe_o3jgfaDi9feBtjFuNOWg/viewform?embedded=true" 
+                            class="google-form"
+                            id="google-form"
+                            title="Firecrawl URL Submission Form">
+                            Loading form...
+                        </iframe>
+                    </div>
+
+                    <div class="form-success" id="success-message">
+                        <div class="success-icon">✅</div>
+                        <h3>Form Submitted Successfully!</h3>
+                        <p>Your URL has been queued for analysis. Results will appear in the "View Results" tab.</p>
+                        <button class="reset-btn" onclick="resetForm()">
+                            📝 Submit Another URL
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Results Section -->
-        <div class="results-header">
-            <h2>📊 Analysis Results</h2>
-        </div>
+            <!-- Results Tab Content -->
+            <div class="tab-content" id="results-tab">
+                <div class="results-section">
+                    <div class="controls">
+                        <input 
+                            type="text" 
+                            class="search-box" 
+                            id="search-input" 
+                            placeholder="Search results..."
+                        />
+                        <button class="refresh-btn" onclick="loadResults()">
+                            🔄 Refresh
+                        </button>
+                    </div>
 
-        <div class="controls">
-            <input 
-                type="text" 
-                class="search-box" 
-                id="search-input" 
-                placeholder="Search results..."
-            />
-            <button class="refresh-btn" onclick="loadResults()">
-                🔄 Refresh
-            </button>
-        </div>
-
-        <div class="results-grid" id="results-container">
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Loading results...</p>
+                    <div class="results-grid" id="results-container">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading results...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -417,7 +522,75 @@
     <script>
         let allResults = [];
         let filteredResults = [];
+        let formSubmitted = false;
 
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Load results when switching to results tab
+            if (tabName === 'results') {
+                loadResults();
+            }
+        }
+
+        // Form submission detection
+        function detectFormSubmission() {
+            const iframe = document.getElementById('google-form');
+            
+            iframe.addEventListener('load', function() {
+                // Check if we're on a submission confirmation page
+                try {
+                    // This is a simple approach - in practice, Google Forms will redirect
+                    // We'll use a timer-based approach instead
+                    if (formSubmitted) {
+                        showSuccessMessage();
+                    }
+                } catch (e) {
+                    // Cross-origin restrictions prevent direct access
+                    // Use timer-based detection instead
+                }
+            });
+
+            // Alternative: Use message listening for form submission
+            window.addEventListener('message', function(event) {
+                if (event.origin === 'https://docs.google.com') {
+                    // Google Form was submitted
+                    formSubmitted = true;
+                    setTimeout(showSuccessMessage, 2000); // Wait 2 seconds
+                }
+            });
+        }
+
+        function showSuccessMessage() {
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('success-message').classList.add('show');
+            formSubmitted = true;
+        }
+
+        function resetForm() {
+            // Hide success message and show form again
+            document.getElementById('success-message').classList.remove('show');
+            document.getElementById('form-container').style.display = 'block';
+            
+            // Reset the iframe to show a fresh form
+            const iframe = document.getElementById('google-form');
+            iframe.src = iframe.src; // Reload the iframe
+            
+            formSubmitted = false;
+        }
+
+        // Results functionality
         async function loadResults() {
             const container = document.getElementById('results-container');
             
@@ -480,7 +653,7 @@
                     <div class="empty-state">
                         <div class="empty-icon">📭</div>
                         <h3>${searchTerm ? 'No matching results' : 'No results yet'}</h3>
-                        <p>${searchTerm ? 'Try a different search term' : 'Submit a URL above to generate your first analysis'}</p>
+                        <p>${searchTerm ? 'Try a different search term' : 'Submit a URL in the "Submit URL" tab to generate your first analysis'}</p>
                     </div>
                 `;
                 return;
@@ -532,11 +705,40 @@
         // Search functionality
         document.getElementById('search-input').addEventListener('input', filterAndRenderResults);
 
-        // Load results on page load
-        loadResults();
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            detectFormSubmission();
+            loadResults(); // Load results initially
+        });
         
-        // Auto-refresh every 30 seconds
-        setInterval(loadResults, 30000);
+        // Auto-refresh every 30 seconds (only when on results tab)
+        setInterval(function() {
+            if (document.getElementById('results-tab').classList.contains('active')) {
+                loadResults();
+            }
+        }, 30000);
+
+        // Alternative form submission detection using a timer
+        // Check every 5 seconds if we're still on the form page
+        let formCheckInterval;
+        
+        function startFormMonitoring() {
+            formCheckInterval = setInterval(function() {
+                try {
+                    const iframe = document.getElementById('google-form');
+                    // If the iframe URL has changed, it might indicate submission
+                    // This is a basic check - real implementation would need more sophisticated detection
+                    if (formSubmitted) {
+                        clearInterval(formCheckInterval);
+                    }
+                } catch (e) {
+                    // Continue monitoring
+                }
+            }, 5000);
+        }
+
+        // Start monitoring when page loads
+        document.addEventListener('DOMContentLoaded', startFormMonitoring);
     </script>
 </body>
 </html>
