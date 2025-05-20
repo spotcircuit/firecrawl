@@ -86,10 +86,9 @@
             flex-direction: column;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            min-height: 600px; /* Minimum height to ensure proper rendering */
+            min-height: 700px; /* Increased minimum height */
         }
 
         /* Tab Navigation */
@@ -141,48 +140,38 @@
         }
 
         .tab-pane {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: none; /* Changed from position: absolute to display: none */
+            width: 100%;
+            height: 100%;
         }
 
         .tab-pane.active {
-            opacity: 1;
-            visibility: visible;
+            display: block; /* Changed from opacity/visibility to display block */
         }
 
-        /* Form Tab Styles with embedded iframe */
+        /* Form Tab Styles - Completely Redesigned */
         .form-content {
-            height: 100%;
             width: 100%;
-            position: relative;
+            height: 800px; /* Fixed height instead of 100% to give form room */
+            padding: 0; /* Remove padding that might affect height */
         }
 
         .google-form-container {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
         }
 
         .google-form-iframe {
             width: 100%;
             height: 100%;
             border: none;
+            display: block; /* Makes sure iframe behaves as block element */
         }
 
         /* Results Tab Styles */
         .results-content {
             padding: 1.5rem;
             height: 100%;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
@@ -525,9 +514,7 @@
                                 src="https://docs.google.com/forms/d/e/1FAIpQLSeYhvs1TJegIh9xchxPEYeDe5fDe_o3jgfaDi9feBtjFuNOWg/viewform?embedded=true" 
                                 frameborder="0" 
                                 marginheight="0" 
-                                marginwidth="0"
-                                scrolling="no"
-                                allowtransparency="true">
+                                marginwidth="0">
                                 Loading Google Form...
                             </iframe>
                         </div>
@@ -824,13 +811,6 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadResults(); // Load results initially
-            
-            // Make sure the iframe loads properly and takes full height
-            const iframe = document.querySelector('.google-form-iframe');
-            iframe.onload = function() {
-                // Force iframe to take full height by removing any default styles
-                iframe.style.height = '100%';
-            };
         });
         
         // Auto-refresh every 30 seconds (only when on results tab)
