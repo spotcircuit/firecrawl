@@ -23,7 +23,7 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -89,7 +89,7 @@
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
-            min-height: 0; /* Important for flex child */
+            min-height: 600px; /* Minimum height to ensure proper rendering */
         }
 
         /* Tab Navigation */
@@ -138,8 +138,6 @@
         .tab-content-area {
             flex: 1;
             position: relative;
-            overflow: hidden;
-            min-height: 0; /* Important for flex child */
         }
 
         .tab-pane {
@@ -151,7 +149,6 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            overflow: hidden;
         }
 
         .tab-pane.active {
@@ -163,9 +160,13 @@
         .form-content {
             height: 100%;
             width: 100%;
+            position: relative;
         }
 
         .google-form-container {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -175,15 +176,15 @@
             width: 100%;
             height: 100%;
             border: none;
-            overflow: hidden;
         }
 
         /* Results Tab Styles */
         .results-content {
+            padding: 1.5rem;
             height: 100%;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            padding: 1.5rem;
         }
 
         .controls {
@@ -258,8 +259,6 @@
 
         .results-grid {
             flex: 1;
-            overflow-y: auto;
-            padding-right: 0.5rem;
         }
 
         .results-container {
@@ -410,6 +409,7 @@
             align-items: center;
             height: 100%;
             text-align: center;
+            padding: 3rem 0;
         }
 
         .loading-spinner {
@@ -445,7 +445,6 @@
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
-                height: 100vh;
             }
             
             .header {
@@ -526,7 +525,9 @@
                                 src="https://docs.google.com/forms/d/e/1FAIpQLSeYhvs1TJegIh9xchxPEYeDe5fDe_o3jgfaDi9feBtjFuNOWg/viewform?embedded=true" 
                                 frameborder="0" 
                                 marginheight="0" 
-                                marginwidth="0">
+                                marginwidth="0"
+                                scrolling="no"
+                                allowtransparency="true">
                                 Loading Google Form...
                             </iframe>
                         </div>
@@ -611,79 +612,81 @@
             }
         }
 
-      // Results functionality
-async function loadResults() {
-    const container = document.getElementById('results-container');
-    
-    try {
-        // We need to use the full commits API to get actual timestamps
-        const response = await fetch('https://api.github.com/repos/spotcircuit/firecrawl/contents/public/results');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const files = await response.json();
-        
-        // Filter HTML files
-        const htmlFiles = files.filter(file => file.name.endsWith('.html'));
-        
-        // Get creation dates for each file (in a real implementation, 
-        // you would fetch this from a database or the GitHub API)
-        const resultsWithDates = await Promise.all(htmlFiles.map(async (file) => {
+        // Results functionality
+        async function loadResults() {
+            const container = document.getElementById('results-container');
+            
             try {
-                // In a real implementation, this would be a proper API call to get commit history
-                // For now, we'll extract date from filename if possible, or use the current date
-                let creationDate;
-                const dateParts = file.name.match(/(\d{4})(\d{2})(\d{2})/);
+                // Step 1: Get all files in the directory
+                const response = await fetch('https://api.github.com/repos/spotcircuit/firecrawl/contents/public/results');
                 
-                if (dateParts) {
-                    // Extract date from filename
-                    const year = dateParts[1];
-                    const month = dateParts[2];
-                    const day = dateParts[3];
-                    creationDate = new Date(`${year}-${month}-${day}`);
-                } else {
-                    // Fallback to current date minus a random number of days
-                    const now = new Date();
-                    const randomDays = Math.floor(Math.random() * 30);
-                    creationDate = new Date(now.getTime() - randomDays * 24 * 60 * 60 * 1000);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                return {
-                    ...file,
-                    creationDate: creationDate
-                };
+                const files = await response.json();
+                const htmlFiles = files.filter(file => file.name.endsWith('.html'));
+                
+                // Step 2: Get commit history for each file to find creation/modification dates
+                const resultsWithDates = await Promise.all(htmlFiles.map(async (file) => {
+                    try {
+                        // Get commit history for this specific file
+                        const commitsUrl = `https://api.github.com/repos/spotcircuit/firecrawl/commits?path=public/results/${file.name}`;
+                        const commitsResponse = await fetch(commitsUrl);
+                        
+                        if (!commitsResponse.ok) {
+                            throw new Error(`Failed to get commits for ${file.name}`);
+                        }
+                        
+                        const commits = await commitsResponse.json();
+                        
+                        // The last commit in the array is the oldest (first commit - creation date)
+                        // The first commit in the array is the newest (last modification)
+                        const creationDate = commits.length > 0 ? 
+                            new Date(commits[commits.length - 1].commit.author.date) : new Date();
+                        const modificationDate = commits.length > 0 ? 
+                            new Date(commits[0].commit.author.date) : new Date();
+                        
+                        return {
+                            ...file,
+                            creationDate,
+                            modificationDate,
+                            committer: commits.length > 0 ? commits[0].commit.author.name : 'Unknown',
+                            commitMessage: commits.length > 0 ? commits[0].commit.message : ''
+                        };
+                    } catch (error) {
+                        console.error(`Error getting commit history for ${file.name}:`, error);
+                        // Fallback to current date
+                        return {
+                            ...file,
+                            creationDate: new Date(),
+                            modificationDate: new Date(),
+                            committer: 'Unknown',
+                            commitMessage: ''
+                        };
+                    }
+                }));
+                
+                // Sort by modification date (newest first)
+                allResults = resultsWithDates.sort((a, b) => b.modificationDate - a.modificationDate);
+                
+                updateStats();
+                filterAndRenderResults();
+                updateLastUpdated();
+                
             } catch (error) {
-                console.error('Error getting file date:', error);
-                // Fallback date
-                return {
-                    ...file,
-                    creationDate: new Date()
-                };
+                console.error('Error fetching results:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        <h3>⚠️ Error Loading Results</h3>
+                        <p>Failed to fetch results: ${error.message}</p>
+                        <button class="refresh-btn" onclick="loadResults()" style="margin-top: 1rem;">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
-        }));
-        
-        // Sort by date (newest first)
-        allResults = resultsWithDates.sort((a, b) => b.creationDate - a.creationDate);
-        
-        updateStats();
-        filterAndRenderResults();
-        updateLastUpdated();
-        
-    } catch (error) {
-        console.error('Error fetching results:', error);
-        container.innerHTML = `
-            <div class="error">
-                <h3>⚠️ Error Loading Results</h3>
-                <p>Failed to fetch results: ${error.message}</p>
-                <button class="refresh-btn" onclick="loadResults()" style="margin-top: 1rem;">
-                    Try Again
-                </button>
-            </div>
-        `;
-    }
-}
+        }
 
         function updateStats() {
             const totalResults = allResults.length;
@@ -738,22 +741,6 @@ async function loadResults() {
                 const resultUrl = `/results/${file.name}`;
                 const rawUrl = `https://raw.githubusercontent.com/spotcircuit/firecrawl/main/public/results/${file.name}`;
                 
-                // Generate creation date from filename (assuming format contains date info)
-                const dateParts = id.match(/(\d{4})(\d{2})(\d{2})/);
-                let creationDate = 'Unknown date';
-                let shortDate = '';
-                if (dateParts) {
-                    const year = dateParts[1];
-                    const month = dateParts[2];
-                    const day = dateParts[3];
-                    creationDate = new Date(`${year}-${month}-${day}`).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                    shortDate = `${month}/${day}/${year}`;
-                }
-                
                 // Generate random status for demo purposes
                 const statusTypes = ['completed', 'processing', 'error'];
                 const randomStatus = statusTypes[Math.floor(Math.random() * 10) % 3]; // Weighted toward completed
@@ -772,25 +759,33 @@ async function loadResults() {
                                 ${randomStatus === 'completed' ? '✓' : randomStatus === 'processing' ? '⟳' : '✗'}
                                 ${randomStatus.charAt(0).toUpperCase() + randomStatus.slice(1)}
                             </span>
-                            Created ${creationDate}
+                            Modified ${file.modificationDate.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long', 
+                                day: 'numeric'
+                            })}
                         </div>
                         
                         <div class="result-metadata">
+                            <div class="meta-item">
+                                <span class="meta-label">Created</span>
+                                <span class="meta-value">${file.creationDate.toLocaleDateString('en-US', {
+                                    month: 'numeric',
+                                    day: 'numeric',
+                                    year: '2-digit'
+                                })}</span>
+                            </div>
                             <div class="meta-item">
                                 <span class="meta-label">Type</span>
                                 <span class="meta-value">${id.includes('extract') ? 'Extract' : 'Scrape'}</span>
                             </div>
                             <div class="meta-item">
+                                <span class="meta-label">By</span>
+                                <span class="meta-value">${file.committer}</span>
+                            </div>
+                            <div class="meta-item">
                                 <span class="meta-label">ID</span>
                                 <span class="meta-value">${id.slice(-6)}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">File Size</span>
-                                <span class="meta-value">${formatFileSize(file.size)}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Date</span>
-                                <span class="meta-value">${shortDate}</span>
                             </div>
                         </div>
                         
@@ -829,6 +824,13 @@ async function loadResults() {
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadResults(); // Load results initially
+            
+            // Make sure the iframe loads properly and takes full height
+            const iframe = document.querySelector('.google-form-iframe');
+            iframe.onload = function() {
+                // Force iframe to take full height by removing any default styles
+                iframe.style.height = '100%';
+            };
         });
         
         // Auto-refresh every 30 seconds (only when on results tab)
