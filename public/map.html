@@ -8,37 +8,70 @@
     href="https://unpkg.com/leaflet/dist/leaflet.css"
   />
   <style>
-    body { margin:0; padding:0; }
-    #map { width:100%; height:80vh; }
-    #controls { padding:10px; background:#f8f8f8; }
-    #controls input { width:150px; margin-right:8px; }
-    #controls button { margin-right:8px; }
+    body { margin:0; padding:0; font-family: sans-serif; }
+    #map { width:100%; height:70vh; }
+    #controls { padding:10px; background:#f0f0f0; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    #controls input, #controls select { padding:4px 6px; font-size:14px; }
+    #controls button { padding:6px 10px; font-size:14px; cursor:pointer; }
+    #coordsDisplay { background:#fff; padding:10px; height:20vh; overflow:auto; font-size:13px; }
   </style>
 </head>
 <body>
   <div id="controls">
-    <input type="text" id="latInput" placeholder="Center Lat (e.g. 39.0997)" />
-    <input type="text" id="lngInput" placeholder="Center Lng (e.g. -94.5786)" />
+    <label>
+      City:
+      <input type="text" id="cityInput" placeholder="e.g. Kansas City" />
+    </label>
+    <label>
+      State:
+      <select id="stateSelect">
+        <option value="">-- Select State --</option>
+        <option value="MO">Missouri</option>
+        <option value="KS">Kansas</option>
+        <option value="NC">North Carolina</option>
+        <!-- Add more states as needed -->
+      </select>
+    </label>
+    <label>
+      Center Lat:
+      <input type="text" id="latInput" placeholder="39.0997" />
+    </label>
+    <label>
+      Center Lng:
+      <input type="text" id="lngInput" placeholder="-94.5786" />
+    </label>
     <button id="setCenter">Set Center</button>
     <button id="submitCorners">Submit Corners</button>
   </div>
   <div id="map"></div>
+  <pre id="coordsDisplay">Loading coordinates...</pre>
 
   <!-- Leaflet -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <!-- smallest-enclosing-circle -->
   <script src="https://unpkg.com/smallest-enclosing-circle/dist/smallest-enclosing-circle.min.js"></script>
   <script>
-    // 1. Initialize map with default center
     const defaultCenter = [39.0997, -94.5786]; // Kansas City, MO
     const defaultZoom = 11;
-    const map = L.map('map').setView(defaultCenter, defaultZoom);
 
+    // Map initialization
+    const map = L.map('map').setView(defaultCenter, defaultZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // 2. Create 4 draggable corner markers
+    // Inputs
+    const cityInput = document.getElementById('cityInput');
+    const stateSelect = document.getElementById('stateSelect');
+    const latInput = document.getElementById('latInput');
+    const lngInput = document.getElementById('lngInput');
+    const coordsDisplay = document.getElementById('coordsDisplay');
+
+    // Prefill center inputs
+    latInput.value = defaultCenter[0];
+    lngInput.value = defaultCenter[1];
+
+    // Create draggable corners
     const corners = [
       L.marker([39.15, -94.80], { draggable: true }).addTo(map),
       L.marker([39.15, -94.30], { draggable: true }).addTo(map),
@@ -46,43 +79,95 @@
       L.marker([38.80, -94.80], { draggable: true }).addTo(map),
     ];
 
-    // 3. Polygon and circle overlays
-    const quad = L.polygon(corners.map(m => m.getLatLng()), {
-      color: 'blue', weight: 2, fillOpacity: 0.05
-    }).addTo(map);
+    // Polygon & circle overlays
+    const quad = L.polygon(corners.map(m => m.getLatLng()), { color: 'blue', weight: 2, fillOpacity: 0.1 }).addTo(map);
+    let circ = L.circle(defaultCenter, { radius: 0, color: 'red', weight: 2 }).addTo(map);
 
-    let circ = L.circle([0,0], { radius: 0, color: 'red', weight: 2 }).addTo(map);
-
-    // 4. Update on drag
-    corners.forEach(m => m.on('drag', updateOverlay));
-
-    // 5. Button handlers
-    document.getElementById('setCenter').onclick = () => {
-      const lat = parseFloat(document.getElementById('latInput').value);
-      const lng = parseFloat(document.getElementById('lngInput').value);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        map.setView([lat, lng], defaultZoom);
-      } else {
-        alert('Please enter valid numbers for lat & lng');
-      }
-    };
-
-    document.getElementById('submitCorners').onclick = () => {
-      // Gather data
+    // Recompute overlays & display coords
+    function updateOverlay() {
       const pts = corners.map(m => m.getLatLng());
-      // Compute MEC
+      quad.setLatLngs(pts);
+
+      // minimal enclosing circle (in degrees)
       const cart = pts.map(p => [p.lng, p.lat]);
       const mec = circleEnclose(cart);
-      const centerLat = mec.y;
-      const centerLng = mec.x;
+      const center = L.latLng(mec.y, mec.x);
+
+      // convert degrees -> meters
       const metersPerDegLat = 111320;
-      const metersPerDegLng = 40075000 * Math.cos(centerLat * Math.PI/180) / 360;
-      const avgScale = (metersPerDegLat + metersPerDegLng)/2;
+      const metersPerDegLng = 40075000 * Math.cos(center.lat * Math.PI/180) / 360;
+      const avgScale = (metersPerDegLat + metersPerDegLng) / 2;
       const radiusMeters = mec.r * avgScale;
+
+      circ.setLatLng(center).setRadius(radiusMeters);
+
+      // show in pre
+      coordsDisplay.textContent = JSON.stringify({
+        corners: pts.map(p => ({ lat: p.lat.toFixed(6), lng: p.lng.toFixed(6) })),
+        circle: { center: { lat: center.lat.toFixed(6), lng: center.lng.toFixed(6) }, radius: Math.round(radiusMeters) }
+      }, null, 2);
+    }
+
+    // Attach drag handlers
+    corners.forEach(m => m.on('drag', updateOverlay));
+
+    // Set center handler
+    document.getElementById('setCenter').onclick = async () => {
+      const lat = parseFloat(latInput.value);
+      const lng = parseFloat(lngInput.value);
+      let center;
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        center = [lat, lng];
+      } else if (cityInput.value && stateSelect.value) {
+        // geocode city, state
+        const q = encodeURIComponent(`${cityInput.value}, ${stateSelect.value}`);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`);
+          const js = await res.json();
+          if (js && js.length) {
+            center = [parseFloat(js[0].lat), parseFloat(js[0].lon)];
+            latInput.value = center[0];
+            lngInput.value = center[1];
+          } else {
+            return alert('No location found for that city/state');
+          }
+        } catch (err) {
+          return alert('Geocode error: ' + err);
+        }
+      } else {
+        return alert('Enter valid lat/lng OR city and state');
+      }
+
+      map.setView(center, defaultZoom);
+
+      // reset corners to box around center
+      const lat = center[0], lng = center[1];
+      const dLat = 0.15, dLng = 0.25; // adjust box size
+      const newCorners = [
+        [lat + dLat, lng - dLng],
+        [lat + dLat, lng + dLng],
+        [lat - dLat, lng + dLng],
+        [lat - dLat, lng - dLng],
+      ];
+      newCorners.forEach((c,i) => corners[i].setLatLng(c));
+      updateOverlay();
+    };
+
+    // Submit handler
+    document.getElementById('submitCorners').onclick = () => {
+      const pts = corners.map(m => m.getLatLng());
+      const cart = pts.map(p => [p.lng, p.lat]);
+      const mec = circleEnclose(cart);
+      const center = { lat: mec.y, lng: mec.x };
+      const metersPerDegLat = 111320;
+      const metersPerDegLng = 40075000 * Math.cos(center.lat * Math.PI/180) / 360;
+      const avgScale = (metersPerDegLat + metersPerDegLng) / 2;
+      const radius = mec.r * avgScale;
 
       const payload = {
         corners: pts.map(p => ({ lat: p.lat, lng: p.lng })),
-        circle: { center: { lat: centerLat, lng: centerLng }, radius: radiusMeters }
+        circle: { center, radius }
       };
 
       fetch('https://n8n.spotcircuit.com/webhook-test/SendCords', {
@@ -90,28 +175,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      .then(res => {
-        if (res.ok) alert('Corners submitted successfully!');
-        else alert('Error submitting corners: ' + res.statusText);
-      })
-      .catch(err => alert('Fetch error: ' + err));
+      .then(r => r.ok ? alert('Submitted!') : alert('Error ' + r.statusText))
+      .catch(e => alert('Fetch error: ' + e));
     };
 
-    // 6. Overlay update function
-    function updateOverlay() {
-      const pts = corners.map(m => m.getLatLng());
-      quad.setLatLngs(pts);
-      const cart = pts.map(p => [p.lng, p.lat]);
-      const mec = circleEnclose(cart);
-      const center = L.latLng(mec.y, mec.x);
-      const metersPerDegLat = 111320;
-      const metersPerDegLng = 40075000 * Math.cos(center.lat * Math.PI/180) / 360;
-      const avgScale = (metersPerDegLat + metersPerDegLng)/2;
-      const radiusMeters = mec.r * avgScale;
-      circ.setLatLng(center).setRadius(radiusMeters);
-    }
-
-    // initial draw
+    // Initial draw
     updateOverlay();
   </script>
 </body>
