@@ -6,28 +6,29 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body { margin:0; padding:0; font-family:sans-serif; }
-    #map { width:100%; height:70vh; }
+    #map { width:100%; height:65vh; }
     #controls { padding:10px; background:#f0f0f0; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     #controls label, #controls button { font-size:14px; }
     #controls input, #controls select { padding:4px 6px; font-size:14px; }
     #coordsDisplay { background:#fff; padding:10px; height:20vh; overflow:auto; font-size:13px; }
-    #note { font-size:12px; color:#555; margin-bottom:8px; }
+    #note { font-size:12px; color:#555; margin-bottom:8px; width:100%; }
   </style>
 </head>
 <body>
   <div id="controls">
-    <div id="note">Open your browser console to see the payload logs before submission.</div>
-    <label>City: <input type="text" id="cityInput" placeholder="e.g. Charlotte" /></label>
-    <label>State: <select id="stateSelect">
+    <div id="note">Open your browser console to see payload logs before submission.</div>
+    <label>City:<input type="text" id="cityInput" placeholder="e.g. Charlotte" /></label>
+    <label>State:<select id="stateSelect">
       <option value="">-- Select State --</option>
       <option value="MO">Missouri</option>
       <option value="KS">Kansas</option>
       <option value="NC">North Carolina</option>
     </select></label>
     <button id="lookupLocation">Lookup Location</button>
-    <label>Lat: <input type="text" id="latInput" placeholder="39.0997" /></label>
-    <label>Lng: <input type="text" id="lngInput" placeholder="-94.5786" /></label>
+    <label>Lat:<input type="text" id="latInput" placeholder="39.0997" /></label>
+    <label>Lng:<input type="text" id="lngInput" placeholder="-94.5786" /></label>
     <button id="setCenter">Recenter</button>
+    <label>Niche:<input type="text" id="nicheInput" value="medical spas" /></label>
     <button id="submitCorners">Submit Corners</button>
   </div>
   <div id="map"></div>
@@ -35,21 +36,17 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Defaults
-    const defaultCenter = [39.0997, -94.5786]; // KC, MO
+    const defaultCenter = [39.0997, -94.5786];
     const defaultZoom = 11;
-
-    // Map init
     const map = L.map('map').setView(defaultCenter, defaultZoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
 
     // DOM elements
     const cityInput = document.getElementById('cityInput');
     const stateSelect = document.getElementById('stateSelect');
     const latInput = document.getElementById('latInput');
     const lngInput = document.getElementById('lngInput');
+    const nicheInput = document.getElementById('nicheInput');
     const coordsDisplay = document.getElementById('coordsDisplay');
     const lookupBtn = document.getElementById('lookupLocation');
     const recenterBtn = document.getElementById('setCenter');
@@ -59,7 +56,7 @@
     latInput.value = defaultCenter[0];
     lngInput.value = defaultCenter[1];
 
-    // Corners
+    // Create draggable corner markers
     const corners = [
       L.marker([defaultCenter[0]+0.05, defaultCenter[1]-0.25], { draggable:true }).addTo(map),
       L.marker([defaultCenter[0]+0.05, defaultCenter[1]+0.25], { draggable:true }).addTo(map),
@@ -69,14 +66,14 @@
     const quad = L.polygon(corners.map(m=>m.getLatLng()), { color:'blue', weight:2, fillOpacity:0.1 }).addTo(map);
     let circ = L.circle(defaultCenter, { radius:0, color:'red', weight:2 }).addTo(map);
 
-    // Utility: Haversine
+    // Haversine formula
     function toRad(d){return d*Math.PI/180;}
     function hav(lat1,lon1,lat2,lon2){
       const R=6371000, dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
       const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
       return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
     }
-    // Compute minimal bounding circle
+    // Compute minimal bounding circle for points
     function computeCircle(pts){
       const lats=pts.map(p=>p.lat), lngs=pts.map(p=>p.lng);
       const minLat=Math.min(...lats), maxLat=Math.max(...lats);
@@ -85,62 +82,60 @@
       const rad=Math.max(...pts.map(p=>hav(cLat,cLng,p.lat,p.lng)));
       return { center:{lat:cLat,lng:cLng}, radius:rad };
     }
-    // Update overlays & display coords
+    // Update overlays and coordinate display
     function updateOverlay(){
       const pts=corners.map(m=>m.getLatLng());
       quad.setLatLngs(pts);
       const c=computeCircle(pts);
       circ.setLatLng([c.center.lat,c.center.lng]).setRadius(c.radius);
       coordsDisplay.textContent=JSON.stringify({
-        corners:pts.map(p=>({lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)})),
-        circle:{center:{lat:+c.center.lat.toFixed(6),lng:+c.center.lng.toFixed(6)},radius:Math.round(c.radius)}
-      },null,2);
+        niche: nicheInput.value,
+        corners: pts.map(p=>({lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)})),
+        circle: {center:{lat:+c.center.lat.toFixed(6),lng:+c.center.lng.toFixed(6)},radius:Math.round(c.radius)}
+      }, null, 2);
     }
     corners.forEach(m=>m.on('drag',updateOverlay));
 
-    // Lookup: geocode city/state
-    lookupBtn.onclick=async()=>{
-      const city=cityInput.value.trim(), st=stateSelect.value;
-      if(!city||!st){return alert('Enter both city and state');}
-      const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city+', '+st)}&limit=1`;
+    // Geocode city/state
+    lookupBtn.onclick = async ()=>{
+      const city = cityInput.value.trim(), st = stateSelect.value;
+      if(!city||!st) return alert('Enter both city and state');
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city+', '+st)}&limit=1`;
       try{
-        const res=await fetch(url);
-        const js=await res.json();
+        const res = await fetch(url);
+        const js = await res.json();
         if(js && js[0]){
-          latInput.value=js[0].lat;
-          lngInput.value=js[0].lon;
-          console.log('Lookup result:', js[0]);
+          latInput.value = js[0].lat;
+          lngInput.value = js[0].lon;
+          console.log('Lookup:', js[0]);
           alert('Found: '+js[0].display_name);
         } else alert('Location not found');
       }catch(e){alert('Geocode error: '+e)}
     };
 
-    // Recenter: use lat/lng
-    recenterBtn.onclick=()=>{
-      const lat=parseFloat(latInput.value), lng=parseFloat(lngInput.value);
+    // Recenter using lat/lng and reset corners
+    recenterBtn.onclick = ()=>{
+      const lat = parseFloat(latInput.value), lng = parseFloat(lngInput.value);
       if(isNaN(lat)||isNaN(lng)) return alert('Enter valid lat and lng');
-      const center=[lat,lng];
-      map.setView(center,defaultZoom);
+      const center=[lat,lng]; map.setView(center,defaultZoom);
       const dLat=0.05, dLng=0.25;
-      const newPts=[[lat+dLat,lng-dLng],[lat+dLat,lng+dLng],[lat-dLat,lng+dLng],[lat-dLat,lng-dLng]];
-      newPts.forEach((c,i)=>corners[i].setLatLng(c));
-      updateOverlay();
+      const newPts = [[lat+dLat,lng-dLng],[lat+dLat,lng+dLng],[lat-dLat,lng+dLng],[lat-dLat,lng-dLng]];
+      newPts.forEach((c,i)=>corners[i].setLatLng(c)); updateOverlay();
     };
 
-    // Submit
-    submitBtn.onclick=()=>{
-      const pts=corners.map(m=>m.getLatLng());
-      const c=computeCircle(pts);
-      const payload={corners:pts.map(p=>({lat:p.lat,lng:p.lng})),circle:c};
+    // Submit payload
+    submitBtn.onclick = ()=>{
+      const pts = corners.map(m=>m.getLatLng());
+      const c = computeCircle(pts);
+      const payload = {
+        niche: nicheInput.value,
+        corners: pts.map(p=>({lat:p.lat,lng:p.lng})),
+        circle: c
+      };
       console.log('Submitting payload:', payload);
       fetch('https://n8n.spotcircuit.com/webhook-test/SendCords',{
-        method:'POST',
-        mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-      })
-      .then(()=>alert('Submitted! (no-cors mode)'))
-      .catch(e=>alert('Fetch error: '+e));
+        method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      }).then(()=>alert('Submitted!')).catch(e=>alert('Fetch error: '+e));
     };
 
     // Initial draw
